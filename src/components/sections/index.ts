@@ -1,0 +1,9 @@
+export { default as BlogSection } from "./BlogSection";
+export { default as DestinationsSection } from "./DestinationsSection";
+export { default as EventsSection } from "./EventsSection";
+export { default as Hero } from "./Hero";
+export { default as Newsletter } from "./Newsletter";
+export { default as PackagesSection } from "./PackagesSection";
+export { default as RestaurantsSection } from "./RestaurantsSection";
+export { default as TopCategories } from "./TopCategories";
+export { default as TrendingSection } from "./TrendingSection";
