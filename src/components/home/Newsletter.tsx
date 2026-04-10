@@ -18,7 +18,7 @@ export default function Newsletter() {
         <p style={{ fontSize: 14, color: "rgba(15,61,51,0.6)", marginBottom: 40 }}>Weekly Kenya travel ideas, hidden restaurant gems, event discoveries, and special subscriber offers</p>
 
         {submitted ? (
-          <div style={{ background: C.green, color: C.white, padding: "18px 40px", borderRadius: 16, display: "inline-block" }}>
+          <div style={{ background: C.green, color: C.white, padding: "18px 40px", borderRadius: 16, display: "inline-block", animation: "popIn 0.45s ease" }}>
             <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22 }}>You&apos;re in! Welcome to Rooted Kenya ✦</p>
           </div>
         ) : (
@@ -57,6 +57,7 @@ export default function Newsletter() {
         )}
         <p style={{ marginTop: 16, fontSize: 12, color: "rgba(15,61,51,0.5)" }}>No spam. Just the good stuff.</p>
       </AnimatedSection>
+      <style>{`@keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
     </section>
   );
 }

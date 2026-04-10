@@ -1,6 +1,6 @@
 "use client";
 
-import PackagesPageContent from "@/components/pages/PackagesPage";
+import PackagesPageContent from "@/components/packages/page";
 
 export default function PackagesPage() {
   return <PackagesPageContent />;

@@ -31,7 +31,7 @@ export default function TrendingSection() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }} className="grid-trending">
           {TRENDING.map((item, index) => (
             <AnimatedSection key={item.title} delay={index * 0.08}>
-              <div className="hover-zoom-frame" style={{ position: "relative", borderRadius: 18, overflow: "hidden", height: index < 3 ? 300 : 260, cursor: "pointer" }}>
+              <div className="hover-zoom-frame trending-card" style={{ position: "relative", borderRadius: 18, overflow: "hidden", height: index < 3 ? 300 : 260, cursor: "pointer", transition: "transform 0.35s ease, box-shadow 0.35s ease" }}>
                 <img
                   src={item.img}
                   alt={item.title}
@@ -47,7 +47,10 @@ export default function TrendingSection() {
           ))}
         </div>
       </div>
-      <style>{`@media (max-width: 900px) { .grid-trending { grid-template-columns: 1fr !important; } }`}</style>
+      <style>{`
+        .trending-card:hover { transform: translateY(-6px); box-shadow: 0 16px 38px rgba(15,61,51,0.16); }
+        @media (max-width: 900px) { .grid-trending { grid-template-columns: 1fr !important; } }
+      `}</style>
     </section>
   );
 }

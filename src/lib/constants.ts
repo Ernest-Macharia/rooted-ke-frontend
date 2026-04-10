@@ -33,6 +33,145 @@ export const DESTINATIONS = [
   { name: "Amboseli",    slug: "amboseli",    short: "Elephant safaris, Kilimanjaro views, lodge options",    tags: ["Elephants","Kilimanjaro","Lodges"],               img: "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=700&q=80" },
 ];
 
+type DestinationSlug =
+  | "nairobi"
+  | "diani"
+  | "naivasha"
+  | "maasai-mara"
+  | "nanyuki"
+  | "watamu"
+  | "amboseli";
+
+type DestinationRestaurant = {
+  name: string;
+  area: string;
+  cuisine: string;
+  budget: "Budget" | "Mid" | "Premium";
+  img: string;
+};
+
+type DestinationDetail = {
+  name: string;
+  short: string;
+  heroImg: string;
+  highlights: string[];
+  overview: string;
+  packageLink: string;
+  restaurants: DestinationRestaurant[];
+  things: string[];
+  hotelSearch: string;
+};
+
+export const DESTINATION_DETAIL: Record<DestinationSlug, DestinationDetail> = {
+  nairobi: {
+    name: "Nairobi",
+    short: "Restaurants, stays, events, and 24-hour plans in Kenya's capital",
+    heroImg: "https://images.unsplash.com/photo-1611348524140-53c9a25263d6?w=1400&q=85",
+    highlights: ["Boutique & luxury stays", "Rooftop dining & bars", "Nairobi National Park", "Vibrant nightlife"],
+    overview:
+      "Nairobi is the entry point to Kenya and one of the most dynamic cities in East Africa. This guide brings together everything you need to experience Nairobi properly: the best restaurants and brunch spots, date-night and rooftop recommendations, weekend events, boutique and luxury stays, and practical 24-hour itineraries.",
+    packageLink: "/packages/city",
+    restaurants: [
+      { name: "Talisman Restaurant", area: "Karen", cuisine: "Continental", budget: "Premium", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500&q=80" },
+      { name: "Carnivore Restaurant", area: "Langata", cuisine: "Nyama Choma", budget: "Mid", img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&q=80" },
+      { name: "The Nest Rooftop", area: "Westlands", cuisine: "Pan-Asian", budget: "Premium", img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&q=80" },
+    ],
+    things: ["Nairobi National Park game drive", "Karen Blixen Museum", "City brunch crawl", "Karura Forest walk", "Nairobi Railway Museum"],
+    hotelSearch: "Nairobi, Kenya",
+  },
+  diani: {
+    name: "Diani",
+    short: "Beachfront stays, water activities, and 3D/2N plans",
+    heroImg: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1400&q=85",
+    highlights: ["Beach resorts", "Water sports", "Seafood", "Relaxation"],
+    overview:
+      "Diani Beach is one of Kenya's most popular coastal destinations. This guide covers hotels in Diani from budget to luxury, beachfront villas and resorts, snorkelling and water activities, restaurant recommendations, three-day itineraries, and ready-to-book weekend bundles.",
+    packageLink: "/packages/beach",
+    restaurants: [
+      { name: "Ali Barbour's Cave", area: "Diani Beach Road", cuisine: "Seafood", budget: "Premium", img: "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=500&q=80" },
+      { name: "The Sands Beach Bar", area: "Diani Beachfront", cuisine: "Continental", budget: "Mid", img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&q=80" },
+      { name: "40 Thieves Beach Bar", area: "Diani Beach", cuisine: "Casual Dining", budget: "Budget", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500&q=80" },
+    ],
+    things: ["Snorkelling at Kisite Marine Park", "Skydiving over the beach", "Kitesurfing lessons", "Colobus monkey sanctuary", "Shimba Hills day trip"],
+    hotelSearch: "Diani Beach, Kenya",
+  },
+  naivasha: {
+    name: "Naivasha",
+    short: "Lake stays, Hell's Gate cycling, and easy 2-day trips from Nairobi",
+    heroImg: "https://images.unsplash.com/photo-1540202403-b7abd6747a18?w=1400&q=85",
+    highlights: ["Lakeside hotels & cabins", "Hell's Gate cycling", "Boat rides", "Nature walks"],
+    overview:
+      "Naivasha remains one of the most accessible and rewarding short trips from Nairobi. This guide includes lakeside hotels and cabins, Hell's Gate National Park activities, boat rides and nature experiences, and budget-friendly two-day and three-day plans.",
+    packageLink: "/packages/weekend",
+    restaurants: [
+      { name: "Olerai House", area: "Lake Naivasha", cuisine: "Continental", budget: "Premium", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500&q=80" },
+      { name: "Camp Carnelley's", area: "Naivasha", cuisine: "Casual", budget: "Mid", img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&q=80" },
+    ],
+    things: ["Hell's Gate cycling", "Crescent Island boat trip", "Lake Naivasha boat ride", "Oserian Wildlife Sanctuary", "Elsamere Conservation Centre"],
+    hotelSearch: "Naivasha, Kenya",
+  },
+  "maasai-mara": {
+    name: "Maasai Mara",
+    short: "Safari packages, migration season trips, and Mara lodge comparisons",
+    heroImg: "https://images.unsplash.com/photo-1534177616072-ef7dc120449d?w=1400&q=85",
+    highlights: ["Big Five game drives", "Migration season", "Luxury lodges", "Budget camps"],
+    overview:
+      "The Maasai Mara is Kenya's most iconic safari destination. This page breaks down three-day and four-day safari packages, budget camps versus luxury lodges, the best time to visit during migration season, what safari costs in Kenya, and tour versus self-drive considerations.",
+    packageLink: "/packages/safari",
+    restaurants: [
+      { name: "Angama Mara Restaurant", area: "Mara North", cuisine: "Fine Dining", budget: "Premium", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500&q=80" },
+      { name: "Rekero Camp Dining", area: "Mara Triangle", cuisine: "Bush Cuisine", budget: "Mid", img: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=500&q=80" },
+    ],
+    things: ["Morning game drive", "Hot air balloon safari", "Maasai village visit", "Guided bush walk", "Sundowner at the Mara"],
+    hotelSearch: "Maasai Mara, Kenya",
+  },
+  nanyuki: {
+    name: "Nanyuki",
+    short: "Mount Kenya views, cabin stays, and curated 2-3 day escapes",
+    heroImg: "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=1400&q=85",
+    highlights: ["Private cabins", "Boutique stays", "Mount Kenya views", "Nature activities"],
+    overview:
+      "Nanyuki has become one of Kenya's most sought-after escape destinations. This guide covers private cabins and boutique stays, Mount Kenya experiences, coffee shops and relaxed dining, and structured weekend itineraries designed for quick but memorable getaways.",
+    packageLink: "/packages/weekend",
+    restaurants: [
+      { name: "Trout Tree Restaurant", area: "Nanyuki", cuisine: "Continental", budget: "Mid", img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&q=80" },
+      { name: "Caramel Cafe", area: "Nanyuki Town", cuisine: "Cafe & Brunch", budget: "Budget", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500&q=80" },
+    ],
+    things: ["Mount Kenya hike", "Ol Pejeta Conservancy", "Sweetwaters Chimpanzee Sanctuary", "Nanyuki river walk", "Stargazing at the equator"],
+    hotelSearch: "Nanyuki, Kenya",
+  },
+  watamu: {
+    name: "Watamu",
+    short: "Marine parks, boutique stays, and Watamu beach escapes",
+    heroImg: "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?w=1400&q=85",
+    highlights: ["Marine park snorkelling", "Boutique stays", "Turtle conservation", "Relaxed coastal energy"],
+    overview:
+      "Watamu is known for its marine park, turquoise waters, and easy coastal pace. This page includes Watamu beach hotels, snorkelling and marine park tours, boutique and luxury stays, three-day itineraries, and travel logistics from Nairobi.",
+    packageLink: "/packages/beach",
+    restaurants: [
+      { name: "Turtle Bay Beach Club", area: "Watamu", cuisine: "Seafood", budget: "Mid", img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&q=80" },
+      { name: "La Madrugada", area: "Watamu", cuisine: "Italian & Seafood", budget: "Premium", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500&q=80" },
+    ],
+    things: ["Watamu Marine National Park snorkel", "Turtle watching", "Deep sea fishing", "Gede Ruins visit", "Bio-Ken Snake Farm"],
+    hotelSearch: "Watamu, Kenya",
+  },
+  amboseli: {
+    name: "Amboseli",
+    short: "Elephant safaris, Mount Kilimanjaro views, and Amboseli lodge options",
+    heroImg: "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=1400&q=85",
+    highlights: ["Elephant herds", "Kilimanjaro views", "Safari lodges", "Photography"],
+    overview:
+      "Amboseli National Park is famous for large elephant herds and dramatic Mount Kilimanjaro views. This page highlights safari packages, lodge comparisons, best seasons, photography tips, and two-day to three-day safari plans.",
+    packageLink: "/packages/safari",
+    restaurants: [
+      { name: "Tortilis Camp Dining", area: "Amboseli", cuisine: "Bush Cuisine", budget: "Premium", img: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=500&q=80" },
+      { name: "Ol Tukai Lodge Restaurant", area: "Amboseli", cuisine: "Continental", budget: "Mid", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500&q=80" },
+    ],
+    things: ["Elephant viewing at Ol Tukai", "Kilimanjaro sunrise game drive", "Maasai cultural visit", "Observation Hill sunset", "Guided nature walk"],
+    hotelSearch: "Amboseli, Kenya",
+  },
+};
+
 // ─── Restaurants ──────────────────────────────────────────────────────────────
 export const LOCATIONS = ["Westlands","Kilimani","Karen","CBD","Diani","Naivasha","Nanyuki"];
 export const BUDGETS   = ["Under KES 1,000","KES 1,000–3,000","KES 3,000+"];

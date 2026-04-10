@@ -1,6 +1,6 @@
 "use client";
 
-import DestinationsPageContent from "@/components/pages/DestinationsPage";
+import DestinationsPageContent from "@/components/destinations/page";
 
 export default function DestinationsPage() {
   return <DestinationsPageContent />;

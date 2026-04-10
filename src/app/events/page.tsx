@@ -1,6 +1,6 @@
 "use client";
 
-import EventsPageContent from "@/components/pages/EventsPage";
+import EventsPageContent from "@/components/events/page";
 
 export default function EventsPage() {
   return <EventsPageContent />;

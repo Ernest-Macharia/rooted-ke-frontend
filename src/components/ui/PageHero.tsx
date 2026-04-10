@@ -11,6 +11,7 @@ interface PageHeroProps {
 export default function PageHero({ label, title, subtitle }: PageHeroProps) {
   return (
     <section
+      className="page-hero"
       style={{
         background: `linear-gradient(135deg, ${C.green} 0%, ${C.greenLight} 58%, #0d3329 100%)`,
         padding: "128px 32px 82px",
@@ -81,6 +82,7 @@ export default function PageHero({ label, title, subtitle }: PageHeroProps) {
           </p>
         ) : null}
       </div>
+      <style>{`@media (max-width: 700px) { .page-hero { padding: 108px 20px 62px !important; } }`}</style>
     </section>
   );
 }

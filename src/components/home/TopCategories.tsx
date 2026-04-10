@@ -29,7 +29,7 @@ export default function TopCategories() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 20 }} className="grid-3">
         {CATEGORIES_ROW1.map((cat, index) => (
           <AnimatedSection key={cat.title} delay={index * 0.1}>
-            <div className="hover-zoom-frame" style={{ position: "relative", borderRadius: 20, overflow: "hidden", height: 340, cursor: "pointer" }}>
+            <div className="hover-zoom-frame category-card" style={{ position: "relative", borderRadius: 20, overflow: "hidden", height: 340, cursor: "pointer", transition: "transform 0.35s ease, box-shadow 0.35s ease" }}>
               <img
                 src={cat.img}
                 alt={cat.title}
@@ -39,7 +39,7 @@ export default function TopCategories() {
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 28px" }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 600, color: C.white, marginBottom: 8, lineHeight: 1.2 }}>{cat.title}</h3>
                 <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.6 }}>{cat.sub}</p>
-                <div style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6, color: C.sand, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em" }}>
+                <div className="category-cta" style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6, color: C.sand, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", transition: "gap 0.25s ease" }}>
                   Explore <ArrowRight size={14} />
                 </div>
               </div>
@@ -51,7 +51,7 @@ export default function TopCategories() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }} className="grid-5">
         {CATEGORIES_ROW2.map((cat, index) => (
           <AnimatedSection key={cat.title} delay={index * 0.07}>
-            <div className="hover-zoom-frame" style={{ position: "relative", borderRadius: 16, overflow: "hidden", height: 200, cursor: "pointer" }}>
+            <div className="hover-zoom-frame category-card-small" style={{ position: "relative", borderRadius: 16, overflow: "hidden", height: 200, cursor: "pointer", transition: "transform 0.3s ease, box-shadow 0.3s ease" }}>
               <img
                 src={cat.img}
                 alt={cat.title}
@@ -68,6 +68,9 @@ export default function TopCategories() {
       </div>
 
       <style>{`
+        .category-card:hover { transform: translateY(-6px); box-shadow: 0 18px 42px rgba(15,61,51,0.18); }
+        .category-card:hover .category-cta { gap: 10px; }
+        .category-card-small:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(15,61,51,0.16); }
         @media (max-width: 900px) { .grid-3 { grid-template-columns: 1fr !important; }  .grid-5 { grid-template-columns: repeat(2, 1fr) !important; } }
         @media (max-width: 600px) { .grid-5 { grid-template-columns: 1fr !important; } }
       `}</style>
