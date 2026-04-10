@@ -11,6 +11,22 @@ function tintLink(event: MouseEvent<HTMLAnchorElement>, color: string) {
   event.currentTarget.style.color = color;
 }
 
+function quickLinkHref(link: string) {
+  if (link === "About") {
+    return "/about";
+  }
+  if (link === "Contact") {
+    return "/contact";
+  }
+  if (link === "Privacy Policy") {
+    return "/privacy-policy";
+  }
+  if (link === "Terms of Service") {
+    return "/terms-of-service";
+  }
+  return "#";
+}
+
 function InstagramIcon() {
   return (
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -84,7 +100,7 @@ export default function Footer() {
             {QUICK_LINKS.map((link) => (
               <Link
                 key={link}
-                href={link === "About" ? "/about" : link === "Contact" ? "/contact" : "#"}
+                href={quickLinkHref(link)}
                 style={{ display: "block", color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 12, textDecoration: "none", transition: "color 0.2s" }}
                 onMouseEnter={(event) => tintLink(event, C.white)}
                 onMouseLeave={(event) => tintLink(event, "rgba(255,255,255,0.6)")}

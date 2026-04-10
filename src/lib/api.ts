@@ -40,5 +40,9 @@ export const submitEnquiry = <TData>(data: TData) =>
   api.post("/api/bookings/enquire/", data);
 
 export const getHomepageData = () => api.get("/api/core/homepage/");
+export const getSitePage = (slug: string) =>
+  api.get(`/api/core/site-pages/${slug}/`);
+export const getLegalPages = () => api.get("/api/core/legal-pages/");
+export const getFrontendBootstrap = () => api.get("/api/core/frontend-bootstrap/");
 
 export default api;
