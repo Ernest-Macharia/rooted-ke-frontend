@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Calendar, Tag } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
@@ -8,12 +8,36 @@ import Footer from "@/components/layout/Footer";
 import PageHero from "@/components/ui/PageHero";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { BLOG_CATEGORIES, BLOG_POSTS, C } from "@/lib/constants";
+import {
+  fetchBlogCategoryLabels,
+  fetchBlogPosts,
+  type BlogPostItem,
+} from "@/services/blogService";
 
-type BlogPost = (typeof BLOG_POSTS)[number];
+type BlogPostCard = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  img: string;
+  date: string;
+  category: string;
+};
 
 interface BlogCardProps {
-  post: BlogPost;
+  post: BlogPostCard;
   delay: number;
+}
+
+function normalizeBlogPost(item: BlogPostItem): BlogPostCard {
+  const category = item.category_detail?.name || item.category || "General";
+  return {
+    slug: item.slug,
+    title: item.title,
+    excerpt: item.excerpt || "Read the full guide from Rooted Kenya.",
+    img: item.img || "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=800&q=80",
+    date: item.date || "",
+    category,
+  };
 }
 
 function BlogCard({ post, delay }: BlogCardProps) {
@@ -42,11 +66,7 @@ function BlogCard({ post, delay }: BlogCardProps) {
           }}
         >
           <div className="hover-zoom-frame" style={{ height: 220, overflow: "hidden", flexShrink: 0 }}>
-            <img
-              src={post.img}
-              alt={post.title}
-              className="hover-zoom-img"
-            />
+            <img src={post.img} alt={post.title} className="hover-zoom-img" />
           </div>
 
           <div style={{ padding: "22px 24px 28px", flex: 1, display: "flex", flexDirection: "column" }}>
@@ -82,11 +102,43 @@ function BlogCard({ post, delay }: BlogCardProps) {
 
 export default function BlogPageContent() {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [categories, setCategories] = useState<string[]>(BLOG_CATEGORIES);
+  const [posts, setPosts] = useState<BlogPostCard[]>(BLOG_POSTS);
 
-  const filteredPosts =
-    activeCategory === "All"
-      ? BLOG_POSTS
-      : BLOG_POSTS.filter((post) => post.category === activeCategory);
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        const [postData, categoryData] = await Promise.all([
+          fetchBlogPosts(),
+          fetchBlogCategoryLabels(),
+        ]);
+
+        if (!mounted) return;
+
+        if (postData.length > 0) {
+          setPosts(postData.map(normalizeBlogPost));
+        }
+        if (categoryData.length > 0) {
+          setCategories(categoryData);
+        }
+      } catch {
+        // Keep static fallback when API is unavailable.
+      }
+    };
+
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const filteredPosts = useMemo(
+    () => (activeCategory === "All" ? posts : posts.filter((post) => post.category === activeCategory)),
+    [activeCategory, posts],
+  );
 
   return (
     <main style={{ fontFamily: "'Inter',system-ui,sans-serif", overflowX: "hidden", background: "#fcfaf6", color: C.green }}>
@@ -107,7 +159,7 @@ export default function BlogPageContent() {
 
       <section style={{ padding: "44px 32px 0", maxWidth: 1280, margin: "0 auto" }}>
         <AnimatedSection style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-          {BLOG_CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <button
               key={category}
               onClick={() => setActiveCategory(category)}

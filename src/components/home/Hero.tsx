@@ -3,6 +3,15 @@
 import { MouseEvent } from "react";
 import { C } from "@/lib/constants";
 
+type HeroCms = {
+  hero_eyebrow?: string;
+  hero_title?: string;
+  hero_subtitle?: string;
+  hero_description?: string;
+  hero_background_image_src?: string;
+  hero_background_image_url?: string;
+};
+
 function buttonHover(
   event: MouseEvent<HTMLButtonElement>,
   transform: string,
@@ -24,11 +33,17 @@ function buttonHover(
   }
 }
 
-export default function Hero() {
+export default function Hero({ cms }: { cms?: HeroCms }) {
+  const eyebrow = cms?.hero_eyebrow || "Curated travel, dining & experiences";
+  const title = cms?.hero_title || "Rooted Kenya";
+  const subtitle = cms?.hero_subtitle || "Experience Kenya Properly";
+  const description = cms?.hero_description || "Curated travel, dining, and experiences across the country";
+  const imageUrl = cms?.hero_background_image_src || cms?.hero_background_image_url || "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=1600&q=85";
+
   return (
     <section className="home-hero" style={{ position: "relative", height: "100vh", minHeight: 640, overflow: "hidden" }}>
       <img
-        src="https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=1600&q=85"
+        src={imageUrl}
         alt="Kenyan savannah at sunset"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", animation: "heroKenBurns 24s ease-in-out infinite alternate" }}
       />
@@ -64,16 +79,16 @@ export default function Hero() {
       <div className="home-hero-inner" style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", padding: "0 24px" }}>
         <div style={{ opacity: 0, animation: "fadeUp 0.8s ease 0.3s forwards" }}>
           <p style={{ color: C.sand, fontSize: 11, fontWeight: 600, letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 20 }}>
-            Curated travel, dining & experiences
+            {eyebrow}
           </p>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(52px, 9vw, 110px)", fontWeight: 600, color: C.white, lineHeight: 1.0, textShadow: "0 2px 40px rgba(0,0,0,0.3)", marginBottom: 20 }}>
-            Rooted Kenya
+            {title}
           </h1>
           <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(22px, 3.5vw, 36px)", color: "rgba(255,255,255,0.9)", fontWeight: 400, fontStyle: "italic", marginBottom: 12, textShadow: "0 1px 20px rgba(0,0,0,0.3)" }}>
-            Experience Kenya Properly
+            {subtitle}
           </p>
           <p style={{ fontSize: 15, color: "rgba(255,255,255,0.75)", maxWidth: 480, margin: "0 auto 40px", lineHeight: 1.7 }}>
-            Curated travel, dining, and experiences across the country
+            {description}
           </p>
           <div className="hero-cta-row" style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
             <button

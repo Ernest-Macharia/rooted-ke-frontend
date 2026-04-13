@@ -5,14 +5,19 @@ import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import PageHero from "@/components/ui/PageHero";
 import { C } from "@/lib/constants";
-import { getSitePage } from "@/lib/api";
+import { getAppPage } from "@/lib/api";
 
 type SitePagePayload = {
   slug: string;
   title: string;
   summary?: string;
   body?: string;
-  content?: Record<string, unknown>;
+  section_1_heading?: string;
+  section_1_body?: string;
+  section_2_heading?: string;
+  section_2_body?: string;
+  section_3_heading?: string;
+  section_3_body?: string;
 };
 
 interface SitePageTemplateProps {
@@ -61,7 +66,7 @@ export default function SitePageTemplate({
 
     const loadPage = async () => {
       try {
-        const response = await getSitePage(slug);
+        const response = await getAppPage(slug);
         if (!active) {
           return;
         }
@@ -85,24 +90,15 @@ export default function SitePageTemplate({
   }, [slug]);
 
   const sections = useMemo(() => {
-    const content = page?.content;
-    if (!content || typeof content !== "object") {
-      return [];
-    }
+    const sectionTuples: Array<[string | undefined, string | undefined]> = [
+      [page?.section_1_heading, page?.section_1_body],
+      [page?.section_2_heading, page?.section_2_body],
+      [page?.section_3_heading, page?.section_3_body],
+    ];
 
-    const sectionsValue = (content as { sections?: unknown }).sections;
-    if (!Array.isArray(sectionsValue)) {
-      return [];
-    }
-
-    return sectionsValue
-      .map((section) => {
-        if (!section || typeof section !== "object") {
-          return null;
-        }
-        const heading = (section as { heading?: unknown }).heading;
-        const text = (section as { text?: unknown }).text;
-        if (typeof heading !== "string" || typeof text !== "string") {
+    return sectionTuples
+      .map(([heading, text]) => {
+        if (!heading || !text) {
           return null;
         }
         return { heading, text };

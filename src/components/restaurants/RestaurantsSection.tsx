@@ -1,28 +1,36 @@
 "use client";
 
+import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { C } from "@/lib/constants";
 
 const RESTAURANTS = [
-  { title: "By Location", sub: "Nairobi, Diani, Naivasha and beyond — clearly sorted by area", icon: "📍" },
-  { title: "By Budget", sub: "From budget eats to luxury dining", icon: "💰" },
-  { title: "By Cuisine", sub: "Italian, seafood, nyama choma, Asian, and more", icon: "🍽️" },
+  { title: "By Location", sub: "Nairobi, Diani, Naivasha and beyond — clearly sorted by area", icon: "📍", href: "/restaurants" },
+  { title: "By Budget", sub: "From budget eats to luxury dining", icon: "💰", href: "/restaurants" },
+  { title: "By Cuisine", sub: "Italian, seafood, nyama choma, Asian, and more", icon: "🍽️", href: "/restaurants" },
 ];
 
-export default function RestaurantsSection() {
+type RestaurantsCms = {
+  restaurants_eyebrow?: string;
+  restaurants_title?: string;
+  restaurants_subtitle?: string;
+};
+
+export default function RestaurantsSection({ cms }: { cms?: RestaurantsCms }) {
   return (
     <section style={{ background: C.green, padding: "80px 32px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <AnimatedSection style={{ textAlign: "center", marginBottom: 52 }}>
-          <p style={{ color: C.sand, fontSize: 11, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 12 }}>Where to Eat</p>
-          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(34px, 5vw, 56px)", color: C.white, lineHeight: 1.1, marginBottom: 16 }}>Where to Eat in Kenya</h2>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 15 }}>Find the best restaurants by location, budget, or cuisine</p>
+          <p style={{ color: C.sand, fontSize: 11, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 12 }}>{cms?.restaurants_eyebrow || "Where to Eat"}</p>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(34px, 5vw, 56px)", color: C.white, lineHeight: 1.1, marginBottom: 16 }}>{cms?.restaurants_title || "Where to Eat in Kenya"}</h2>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 15 }}>{cms?.restaurants_subtitle || "Find the best restaurants by location, budget, or cuisine"}</p>
         </AnimatedSection>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }} className="grid-rest">
-          {RESTAURANTS.map((restaurant, index) => (
-            <AnimatedSection key={restaurant.title} delay={index * 0.1}>
+        {RESTAURANTS.map((restaurant, index) => (
+          <AnimatedSection key={restaurant.title} delay={index * 0.1}>
+            <Link href={restaurant.href} style={{ textDecoration: "none", display: "block" }}>
               <div
                 style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "40px 36px", cursor: "pointer", transition: "all 0.3s" }}
                 onMouseEnter={(event) => {
@@ -43,9 +51,10 @@ export default function RestaurantsSection() {
                   Browse <ChevronRight size={14} />
                 </div>
               </div>
-            </AnimatedSection>
-          ))}
-        </div>
+            </Link>
+          </AnimatedSection>
+        ))}
+      </div>
       </div>
       <style>{`@media (max-width: 800px) { .grid-rest { grid-template-columns: 1fr !important; } }`}</style>
     </section>

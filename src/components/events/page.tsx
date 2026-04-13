@@ -1,12 +1,14 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Calendar, LucideIcon, Mountain, Music, PartyPopper, Users } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import PageHero from "@/components/ui/PageHero";
 import AnimatedSection from "@/components/ui/AnimatedSection";
-import { C } from "@/lib/constants";
+import { C, EVENT_CATEGORIES } from "@/lib/constants";
+import { fetchEventCategories, fetchEvents, type EventCategoryItem, type EventItem } from "@/services/eventsService";
 
 interface EventCategory {
   title: string;
@@ -14,19 +16,49 @@ interface EventCategory {
   Icon: LucideIcon;
   bg: string;
   href: string;
+  key: string;
 }
 
 interface EventCategoryCardProps extends EventCategory {
   delay: number;
 }
 
-const CATEGORIES: EventCategory[] = [
-  { title: "This Weekend", desc: "What's happening this weekend across Kenya", Icon: Calendar, bg: C.teal, href: "/events/this-weekend" },
-  { title: "Concerts & Festivals", desc: "Live music, festivals, and cultural celebrations", Icon: Music, bg: C.green, href: "/events/concerts" },
-  { title: "Nightlife & Parties", desc: "Club nights, themed parties, and social events", Icon: PartyPopper, bg: C.teal, href: "/events/nightlife" },
-  { title: "Cultural & Pop-Ups", desc: "Art shows, markets, and community gatherings", Icon: Users, bg: C.green, href: "/events/cultural" },
-  { title: "Sports & Outdoor", desc: "Marathons, hikes, and active outdoor events", Icon: Mountain, bg: C.teal, href: "/events/sports" },
-];
+type EventPreview = {
+  slug: string;
+  title: string;
+  short: string;
+  img: string;
+  category: string;
+};
+
+function getCategoryIcon(key: string): LucideIcon {
+  if (key === "concerts") return Music;
+  if (key === "nightlife") return PartyPopper;
+  if (key === "cultural") return Users;
+  if (key === "sports") return Mountain;
+  return Calendar;
+}
+
+function normalizeEventPreview(item: EventItem): EventPreview {
+  return {
+    slug: item.slug,
+    title: item.title,
+    short: item.short || item.venue || item.description || "Discover this event",
+    img: item.img || "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80",
+    category: item.category || "weekend",
+  };
+}
+
+function normalizeCategory(item: EventCategoryItem, index: number): EventCategory {
+  return {
+    key: item.key,
+    title: item.label,
+    desc: item.desc,
+    Icon: getCategoryIcon(item.key),
+    bg: index % 2 === 0 ? C.teal : C.green,
+    href: "/events",
+  };
+}
 
 function EventCategoryCard({ title, desc, Icon, bg, href, delay }: EventCategoryCardProps) {
   return (
@@ -72,6 +104,49 @@ function EventCategoryCard({ title, desc, Icon, bg, href, delay }: EventCategory
 }
 
 export default function EventsPageContent() {
+  const [activeCategory, setActiveCategory] = useState("weekend");
+  const [categories, setCategories] = useState<EventCategory[]>(
+    EVENT_CATEGORIES.map((category, index) => normalizeCategory(category, index)),
+  );
+  const [events, setEvents] = useState<EventPreview[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        const [categoryData, eventData] = await Promise.all([
+          fetchEventCategories(),
+          fetchEvents({ upcoming: true }),
+        ]);
+
+        if (!mounted) return;
+
+        if (categoryData.length > 0) {
+          setCategories(categoryData.map(normalizeCategory));
+          setActiveCategory(categoryData[0].key);
+        }
+
+        if (eventData.length > 0) {
+          setEvents(eventData.map(normalizeEventPreview));
+        }
+      } catch {
+        // Keep UI functional if API is unavailable.
+      }
+    };
+
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const visibleEvents = useMemo(() => {
+    const scoped = events.filter((event) => event.category === activeCategory);
+    return (scoped.length > 0 ? scoped : events).slice(0, 3);
+  }, [activeCategory, events]);
+
   const howItWorks = [
     {
       icon: "📋",
@@ -97,7 +172,9 @@ export default function EventsPageContent() {
         *{box-sizing:border-box;margin:0;padding:0} a{text-decoration:none}
         .events-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
         .events-grid-wide{display:grid;grid-template-columns:1fr;gap:20px;margin-top:20px}
+        .event-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:36px}
         .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+        @media(max-width:960px){.event-preview{grid-template-columns:1fr!important}}
         @media(max-width:800px){.how-grid{grid-template-columns:1fr!important}}
         @media(max-width:700px){.events-grid{grid-template-columns:1fr!important}}
       `}</style>
@@ -111,12 +188,41 @@ export default function EventsPageContent() {
 
       <section style={{ padding: "64px 32px", maxWidth: 1280, margin: "0 auto" }}>
         <div className="events-grid">
-          {CATEGORIES.slice(0, 4).map((category, index) => (
-            <EventCategoryCard key={category.title} {...category} delay={index * 0.08} />
+          {categories.slice(0, 4).map((category, index) => (
+            <div key={category.key} onClick={() => setActiveCategory(category.key)} style={{ cursor: "pointer" }}>
+              <EventCategoryCard {...category} delay={index * 0.08} />
+            </div>
           ))}
         </div>
-        <div className="events-grid-wide">
-          <EventCategoryCard {...CATEGORIES[4]} delay={0.32} />
+        {categories[4] ? (
+          <div className="events-grid-wide" onClick={() => setActiveCategory(categories[4].key)} style={{ cursor: "pointer" }}>
+            <EventCategoryCard {...categories[4]} delay={0.32} />
+          </div>
+        ) : null}
+
+        <div className="event-preview">
+          {visibleEvents.length > 0 ? (
+            visibleEvents.map((event, index) => (
+              <AnimatedSection key={event.slug} delay={0.05 + index * 0.08}>
+                <Link href={`/events/${event.slug}`} style={{ textDecoration: "none", display: "block" }}>
+                  <div className="hover-zoom-frame" style={{ borderRadius: 16, overflow: "hidden", position: "relative", height: 220, cursor: "pointer" }}>
+                    <img src={event.img} alt={event.title} className="hover-zoom-img" />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(15,61,51,0.94) 0%,transparent 60%)" }} />
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "18px 20px" }}>
+                      <h4 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: C.white, marginBottom: 4 }}>{event.title}</h4>
+                      <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>{event.short}</p>
+                    </div>
+                  </div>
+                </Link>
+              </AnimatedSection>
+            ))
+          ) : (
+            [1, 2, 3].map((item) => (
+              <div key={item} style={{ background: C.sandLight, borderRadius: 16, padding: "28px", display: "flex", alignItems: "center", justifyContent: "center", height: 180 }}>
+                <p style={{ color: C.teal, fontFamily: "'Cormorant Garamond', serif", fontSize: 20, opacity: 0.5 }}>Events loading...</p>
+              </div>
+            ))
+          )}
         </div>
       </section>
 

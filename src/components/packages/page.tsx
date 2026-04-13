@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, Info } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
@@ -7,12 +8,31 @@ import Footer from "@/components/layout/Footer";
 import PageHero from "@/components/ui/PageHero";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { C, PACKAGES } from "@/lib/constants";
+import { fetchPackages, type PackageItem } from "@/services/packagesService";
 
-type PackageItem = (typeof PACKAGES)[number];
+type PackageCard = {
+  slug: string;
+  title: string;
+  sub: string;
+  icon: string;
+  img: string;
+  inclusions: string[];
+};
 
 interface PackageRowProps {
-  pkg: PackageItem;
+  pkg: PackageCard;
   index: number;
+}
+
+function normalizePackage(item: PackageItem): PackageCard {
+  return {
+    slug: item.slug || item.key || "",
+    title: item.title || item.name || "Travel Package",
+    sub: item.sub || item.tagline || item.overview || "Curated package with clear inclusions",
+    icon: item.icon || "🧳",
+    img: item.img || item.heroImg || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900&q=80",
+    inclusions: item.inclusions || [],
+  };
 }
 
 function PackageRow({ pkg, index }: PackageRowProps) {
@@ -34,11 +54,7 @@ function PackageRow({ pkg, index }: PackageRowProps) {
         className="pkg-row"
       >
         <div className="hover-zoom-frame" style={{ order: isEven ? 0 : 1, position: "relative", minHeight: 360, overflow: "hidden" }}>
-          <img
-            src={pkg.img}
-            alt={pkg.title}
-            className="hover-zoom-img"
-          />
+          <img src={pkg.img} alt={pkg.title} className="hover-zoom-img" />
           <div
             style={{
               position: "absolute",
@@ -105,7 +121,7 @@ function PackageRow({ pkg, index }: PackageRowProps) {
 
           <div>
             <Link
-              href={`/packages/${pkg.key}`}
+              href={`/packages/${pkg.slug}`}
               style={{
                 display: "block",
                 background: C.teal,
@@ -144,6 +160,37 @@ export default function PackagesPageContent() {
     { label: "Tiered Pricing", body: "Budget, Mid, and Premium options" },
     { label: "Payment Terms", body: "Flexible payment and booking options" },
   ];
+
+  const [packages, setPackages] = useState<PackageCard[]>(
+    PACKAGES.map((item) => ({
+      slug: item.key,
+      title: item.title,
+      sub: item.sub,
+      icon: item.icon,
+      img: item.img,
+      inclusions: item.inclusions,
+    })),
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        const data = await fetchPackages();
+        if (!mounted || data.length === 0) return;
+        setPackages(data.map(normalizePackage));
+      } catch {
+        // Keep static fallback when API is unavailable.
+      }
+    };
+
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <main style={{ fontFamily: "'Inter',system-ui,sans-serif", overflowX: "hidden", background: "#fcfaf6", color: C.green }}>
@@ -213,66 +260,9 @@ export default function PackagesPageContent() {
       </section>
 
       <section style={{ padding: "0 32px 80px", maxWidth: 1280, margin: "0 auto" }}>
-        {PACKAGES.map((pkg, index) => (
-          <PackageRow key={pkg.key} pkg={pkg} index={index} />
+        {packages.map((pkg, index) => (
+          <PackageRow key={pkg.slug || `${pkg.title}-${index}`} pkg={pkg} index={index} />
         ))}
-      </section>
-
-      <section style={{ background: C.green, padding: "72px 32px", textAlign: "center" }}>
-        <AnimatedSection>
-          <p
-            style={{
-              color: C.sand,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.3em",
-              textTransform: "uppercase",
-              marginBottom: 16,
-            }}
-          >
-            Bespoke Planning
-          </p>
-          <h2
-            style={{
-              fontFamily: "'Cormorant Garamond',serif",
-              fontSize: "clamp(30px,4.5vw,52px)",
-              color: C.white,
-              marginBottom: 16,
-              lineHeight: 1.1,
-            }}
-          >
-            Don&apos;t See What You Need?
-          </h2>
-          <p style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", maxWidth: 480, margin: "0 auto 36px", lineHeight: 1.75 }}>
-            Tell us your vision and we&apos;ll build a bespoke Kenya experience just for you.
-          </p>
-          <Link
-            href="/contact"
-            style={{
-              background: C.teal,
-              color: C.white,
-              padding: "15px 40px",
-              borderRadius: 50,
-              fontSize: 14,
-              fontWeight: 600,
-              display: "inline-block",
-              letterSpacing: "0.04em",
-              boxShadow: "0 6px 24px rgba(31,111,107,0.4)",
-              transition: "all 0.3s",
-              textDecoration: "none",
-            }}
-            onMouseEnter={(event) => {
-              event.currentTarget.style.transform = "translateY(-2px)";
-              event.currentTarget.style.boxShadow = "0 10px 32px rgba(31,111,107,0.5)";
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.transform = "translateY(0)";
-              event.currentTarget.style.boxShadow = "0 6px 24px rgba(31,111,107,0.4)";
-            }}
-          >
-            Get in Touch
-          </Link>
-        </AnimatedSection>
       </section>
 
       <Footer />

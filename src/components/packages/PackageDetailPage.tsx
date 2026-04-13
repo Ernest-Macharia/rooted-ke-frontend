@@ -1,12 +1,35 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { C } from "@/lib/constants";
 import { PACKAGE_DATA } from "@/lib/data";
+import { fetchPackage, type PackageItem } from "@/services/packagesService";
 
 export default function PackageDetailPage({ slug }: { slug: string }) {
-  const pkg = PACKAGE_DATA[slug as keyof typeof PACKAGE_DATA];
+  const [pkg, setPkg] = useState<PackageItem | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetchPackage(slug)
+      .then((data) => {
+        if (active) {
+          setPkg(data);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          const fallback = PACKAGE_DATA[slug as keyof typeof PACKAGE_DATA];
+          setPkg(fallback || null);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
 
   if (!pkg) {
     return null;
@@ -17,7 +40,7 @@ export default function PackageDetailPage({ slug }: { slug: string }) {
       <Navbar />
 
       <section className="pkg-detail-hero" style={{ position: "relative", height: 340, marginTop: 72, overflow: "hidden" }}>
-        <img src={pkg.heroImg} alt={pkg.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={pkg.heroImg || pkg.img} alt={pkg.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(10,35,28,0.2), rgba(10,35,28,0.82))" }} />
         <div className="pkg-detail-hero-copy" style={{ position: "absolute", insetInline: 0, bottom: 0, padding: "28px 40px" }}>
           <div style={{ maxWidth: 1100, margin: "0 auto" }}>
@@ -32,7 +55,7 @@ export default function PackageDetailPage({ slug }: { slug: string }) {
         <p style={{ fontSize: 15, color: "#5f5a52", lineHeight: 1.8, marginBottom: 22 }}>{pkg.overview}</p>
 
         <div className="pkg-tier-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 16, marginBottom: 26 }}>
-          {pkg.tiers.map((tier: { name: string; price: string; note: string }) => (
+          {(pkg.tiers || []).map((tier: { name: string; price: string; note?: string }) => (
             <div key={tier.name} style={{ background: C.white, borderRadius: 14, border: `1px solid ${C.sandLight}`, padding: 16 }}>
               <p style={{ fontWeight: 700, color: C.teal, fontSize: 13 }}>{tier.name}</p>
               <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: C.green, margin: "6px 0" }}>{tier.price}</p>
@@ -44,7 +67,7 @@ export default function PackageDetailPage({ slug }: { slug: string }) {
         <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.sandLight}`, padding: 20 }}>
           <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 30, color: C.green, marginBottom: 12 }}>Inclusions</h2>
           <div style={{ display: "grid", gap: 10 }}>
-            {pkg.inclusions.map((item: string) => (
+            {(pkg.inclusions || []).map((item: string) => (
               <div key={item} style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 <CheckCircle2 size={16} color={C.teal} />
                 <span style={{ fontSize: 14, color: "#4f4a43" }}>{item}</span>

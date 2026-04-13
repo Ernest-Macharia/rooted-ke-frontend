@@ -12,9 +12,54 @@ import PackagesSection from "@/components/packages/PackagesSection";
 import RestaurantsSection from "@/components/restaurants/RestaurantsSection";
 import TopCategories from "@/components/home/TopCategories";
 import TrendingSection from "@/components/home/TrendingSection";
+import { getHomepageData } from "@/lib/api";
+
+type HomePageCms = {
+  hero_eyebrow?: string;
+  hero_title?: string;
+  hero_subtitle?: string;
+  hero_description?: string;
+  hero_background_image_src?: string;
+  hero_background_image_url?: string;
+  destinations_eyebrow?: string;
+  destinations_title?: string;
+  destinations_subtitle?: string;
+  destinations_fallback_card_image_src?: string;
+  destinations_fallback_card_image_url?: string;
+  top_categories_eyebrow?: string;
+  top_categories_title?: string;
+  top_primary_items?: Array<{ title: string; subtitle?: string; img?: string }>;
+  top_secondary_items?: Array<{ title: string; subtitle?: string; img?: string }>;
+  trending_eyebrow?: string;
+  trending_title?: string;
+  trending_subtitle?: string;
+  trending_items?: Array<{ title: string; subtitle?: string; img?: string }>;
+  restaurants_eyebrow?: string;
+  restaurants_title?: string;
+  restaurants_subtitle?: string;
+  events_eyebrow?: string;
+  events_title?: string;
+  events_subtitle?: string;
+  packages_eyebrow?: string;
+  packages_title?: string;
+  packages_title_emphasis?: string;
+  packages_subtitle?: string;
+  blog_eyebrow?: string;
+  blog_title?: string;
+  blog_subtitle?: string;
+  blog_cta_label?: string;
+  newsletter_eyebrow?: string;
+  newsletter_title?: string;
+  newsletter_subtitle?: string;
+  newsletter_description?: string;
+  newsletter_disclaimer?: string;
+  newsletter_button_label?: string;
+  newsletter_success_message?: string;
+};
 
 export default function HomePage() {
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [cms, setCms] = useState<HomePageCms>({});
 
   useEffect(() => {
     const updateScrollProgress = () => {
@@ -27,6 +72,28 @@ export default function HomePage() {
     updateScrollProgress();
     window.addEventListener("scroll", updateScrollProgress, { passive: true });
     return () => window.removeEventListener("scroll", updateScrollProgress);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadCms = async () => {
+      try {
+        const response = await getHomepageData();
+        const data = response.data as { cms?: { homepage?: HomePageCms } };
+        if (!mounted) return;
+        setCms(data.cms?.homepage || {});
+      } catch {
+        if (!mounted) return;
+        setCms({});
+      }
+    };
+
+    void loadCms();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (
@@ -52,15 +119,15 @@ export default function HomePage() {
         }}
       />
       <Navbar transparent />
-      <Hero />
-      <TopCategories />
-      <TrendingSection />
-      <DestinationsSection />
-      <RestaurantsSection />
-      <EventsSection />
-      <PackagesSection />
-      <BlogSection />
-      <Newsletter />
+      <Hero cms={cms} />
+      <TopCategories cms={cms} />
+      <TrendingSection cms={cms} />
+      <DestinationsSection cms={cms} />
+      <RestaurantsSection cms={cms} />
+      <EventsSection cms={cms} />
+      <PackagesSection cms={cms} />
+      <BlogSection cms={cms} />
+      <Newsletter cms={cms} />
       <Footer />
     </main>
   );

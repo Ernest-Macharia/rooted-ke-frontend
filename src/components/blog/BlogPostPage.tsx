@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, Lightbulb } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
@@ -7,6 +8,7 @@ import Footer from "@/components/layout/Footer";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { C, BLOG_POSTS } from "@/lib/constants";
 import { BLOG_DATA } from "@/lib/data";
+import { fetchBlogPost, fetchBlogPosts, type BlogPostItem } from "@/services/blogService";
 
 type BodyBlockItem = {
   type: string;
@@ -17,32 +19,13 @@ function BodyBlock({ block }: { block: BodyBlockItem }) {
   switch (block.type) {
     case "intro":
       return (
-        <p
-          style={{
-            fontSize: 18,
-            color: "#444",
-            lineHeight: 1.9,
-            marginBottom: 28,
-            fontWeight: 400,
-            borderLeft: `4px solid ${C.teal}`,
-            paddingLeft: 20,
-          }}
-        >
+        <p style={{ fontSize: 18, color: "#444", lineHeight: 1.9, marginBottom: 28, fontWeight: 400, borderLeft: `4px solid ${C.teal}`, paddingLeft: 20 }}>
           {block.text}
         </p>
       );
     case "h2":
       return (
-        <h2
-          style={{
-            fontFamily: "'Cormorant Garamond',serif",
-            fontSize: "clamp(22px,3vw,30px)",
-            fontWeight: 600,
-            color: C.green,
-            marginTop: 40,
-            marginBottom: 14,
-          }}
-        >
+        <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(22px,3vw,30px)", fontWeight: 600, color: C.green, marginTop: 40, marginBottom: 14 }}>
           {block.text}
         </h2>
       );
@@ -50,19 +33,7 @@ function BodyBlock({ block }: { block: BodyBlockItem }) {
       return <p style={{ fontSize: 16, color: "#555", lineHeight: 1.85, marginBottom: 20 }}>{block.text}</p>;
     case "tip":
       return (
-        <div
-          style={{
-            background: C.sandLight,
-            border: `1.5px solid ${C.sandDark}`,
-            borderRadius: 14,
-            padding: "18px 22px",
-            marginTop: 28,
-            marginBottom: 28,
-            display: "flex",
-            gap: 14,
-            alignItems: "flex-start",
-          }}
-        >
+        <div style={{ background: C.sandLight, border: `1.5px solid ${C.sandDark}`, borderRadius: 14, padding: "18px 22px", marginTop: 28, marginBottom: 28, display: "flex", gap: 14, alignItems: "flex-start" }}>
           <Lightbulb size={18} color={C.gold} style={{ marginTop: 2, flexShrink: 0 }} />
           <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7, margin: 0 }}>
             <strong style={{ color: C.green }}>Insider tip: </strong>
@@ -76,30 +47,53 @@ function BodyBlock({ block }: { block: BodyBlockItem }) {
 }
 
 export default function BlogPostPage({ slug }: { slug: string }) {
-  const post = BLOG_DATA[slug as keyof typeof BLOG_DATA];
+  const [post, setPost] = useState<BlogPostItem | null>(null);
+  const [allPosts, setAllPosts] = useState<BlogPostItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([fetchBlogPost(slug), fetchBlogPosts()])
+      .then(([detail, posts]) => {
+        if (!active) {
+          return;
+        }
+        setPost(detail);
+        setAllPosts(posts);
+      })
+      .catch(() => {
+        if (!active) {
+          return;
+        }
+        const fallbackPost = BLOG_DATA[slug as keyof typeof BLOG_DATA] as unknown as BlogPostItem;
+        setPost(fallbackPost || null);
+        setAllPosts(BLOG_POSTS as unknown as BlogPostItem[]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  const related = useMemo(() => {
+    if (!post) {
+      return [];
+    }
+    return allPosts.filter((relatedPost) => post.relatedSlugs?.includes(relatedPost.slug));
+  }, [allPosts, post]);
 
   if (!post) {
     return (
-      <main
-        style={{
-          fontFamily: "'Inter',sans-serif",
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          gap: 20,
-        }}
-      >
+      <main style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20 }}>
         <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 40, color: C.green }}>Post not found</h1>
-        <Link href="/blog" style={{ color: C.teal }}>
-          ← Back to Blog
-        </Link>
+        <Link href="/blog" style={{ color: C.teal }}>← Back to Blog</Link>
       </main>
     );
   }
 
-  const related = BLOG_POSTS.filter((relatedPost) => post.relatedSlugs?.includes(relatedPost.slug));
+  const postCategory = post.category || post.category_detail?.name || "";
+  const postAuthor = post.authorObj?.name || post.author || "Rooted Kenya";
+  const postAvatar = post.authorObj?.avatar;
+  const postTags = post.tags_list || [];
+  const postBody = post.body || [];
 
   return (
     <main style={{ fontFamily: "'Inter',system-ui,sans-serif", overflowX: "hidden" }}>
@@ -120,7 +114,7 @@ export default function BlogPostPage({ slug }: { slug: string }) {
             <ArrowLeft size={13} /> Back to Blog
           </Link>
           <div style={{ marginBottom: 12 }}>
-            <span style={{ background: C.teal, color: C.white, padding: "5px 14px", borderRadius: 50, fontSize: 11, fontWeight: 700, letterSpacing: "0.06em" }}>{post.category}</span>
+            <span style={{ background: C.teal, color: C.white, padding: "5px 14px", borderRadius: 50, fontSize: 11, fontWeight: 700, letterSpacing: "0.06em" }}>{postCategory}</span>
           </div>
           <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(30px,5vw,60px)", fontWeight: 700, color: C.white, lineHeight: 1.1, maxWidth: 760, textShadow: "0 2px 20px rgba(0,0,0,0.3)" }}>
             {post.title}
@@ -131,8 +125,8 @@ export default function BlogPostPage({ slug }: { slug: string }) {
       <section style={{ maxWidth: 800, margin: "0 auto", padding: "52px 32px 80px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 36, flexWrap: "wrap", paddingBottom: 24, borderBottom: `1px solid ${C.sandLight}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src={post.author.avatar} alt={post.author.name} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-            <span style={{ fontSize: 14, fontWeight: 600, color: C.green }}>{post.author.name}</span>
+            {postAvatar ? <img src={postAvatar} alt={postAuthor} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} /> : null}
+            <span style={{ fontSize: 14, fontWeight: 600, color: C.green }}>{postAuthor}</span>
           </div>
           <span style={{ display: "flex", alignItems: "center", gap: 6, color: "#999", fontSize: 13 }}>
             <Calendar size={13} /> {post.date}
@@ -143,13 +137,13 @@ export default function BlogPostPage({ slug }: { slug: string }) {
         </div>
 
         <AnimatedSection>
-          {post.body.map((block, index: number) => (
+          {postBody.map((block, index: number) => (
             <BodyBlock key={index} block={block} />
           ))}
         </AnimatedSection>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 48, paddingTop: 24, borderTop: `1px solid ${C.sandLight}` }}>
-          {post.tags.map((tag: string) => (
+          {postTags.map((tag: string) => (
             <span key={tag} style={{ background: C.sandLight, color: C.green, padding: "6px 16px", borderRadius: 50, fontSize: 12, fontWeight: 500 }}>
               {tag}
             </span>
@@ -178,7 +172,9 @@ export default function BlogPostPage({ slug }: { slug: string }) {
                 >
                   <img src={relatedPost.img} alt={relatedPost.title} style={{ width: "100%", height: 160, objectFit: "cover" }} />
                   <div style={{ padding: "16px 18px 20px" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: C.teal, letterSpacing: "0.06em" }}>{relatedPost.category}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: C.teal, letterSpacing: "0.06em" }}>
+                      {relatedPost.category || relatedPost.category_detail?.name}
+                    </span>
                     <h4 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 19, fontWeight: 600, color: C.green, margin: "8px 0 6px", lineHeight: 1.3 }}>{relatedPost.title}</h4>
                     <p style={{ fontSize: 13, color: "#888" }}>{relatedPost.excerpt}</p>
                   </div>

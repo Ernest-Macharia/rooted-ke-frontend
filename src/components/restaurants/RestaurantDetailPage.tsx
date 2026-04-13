@@ -1,15 +1,67 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { C } from "@/lib/constants";
 import { RESTAURANT_DATA } from "@/lib/data";
+import { fetchRestaurant, type RestaurantItem } from "@/services/restaurantsService";
 
 export default function RestaurantDetailPage({ slug }: { slug: string }) {
-  const restaurant = RESTAURANT_DATA[slug as keyof typeof RESTAURANT_DATA];
+  const [restaurant, setRestaurant] = useState<RestaurantItem | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetchRestaurant(slug)
+      .then((data) => {
+        if (active) {
+          setRestaurant(data);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          const fallback = RESTAURANT_DATA[slug as keyof typeof RESTAURANT_DATA];
+          if (!fallback) {
+            setRestaurant(null);
+            return;
+          }
+
+          const normalizedFallback: RestaurantItem = {
+            slug: fallback.slug,
+            name: fallback.name,
+            area: fallback.area,
+            description: fallback.description,
+            cuisine: fallback.cuisine ? [{ name: fallback.cuisine }] : [],
+            budget: fallback.budget,
+            priceRange: fallback.priceRange,
+            img: fallback.img,
+            openingHours: fallback.openingHours,
+            bestFor: fallback.bestFor || [],
+            mustOrder: fallback.mustOrder || [],
+            bookingRequired: fallback.bookingRequired,
+            phone: fallback.phone,
+            location: fallback.location,
+            tags: fallback.tags || [],
+            gallery: fallback.gallery || [],
+          };
+
+          setRestaurant(normalizedFallback);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
 
   if (!restaurant) {
     return null;
   }
+
+  const cuisineText =
+    Array.isArray(restaurant.cuisine) && restaurant.cuisine.length > 0
+      ? restaurant.cuisine.map((item) => item.name).join(", ")
+      : "";
 
   return (
     <main style={{ fontFamily: "'Inter',system-ui,sans-serif", background: "#fcfaf6", color: C.green }}>
@@ -22,7 +74,9 @@ export default function RestaurantDetailPage({ slug }: { slug: string }) {
           <div style={{ maxWidth: 1100, margin: "0 auto" }}>
             <Link href="/restaurants" style={{ color: "rgba(255,255,255,0.85)", fontSize: 13 }}>← Back to Restaurants</Link>
             <h1 style={{ marginTop: 10, fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(32px,5vw,56px)", color: C.white }}>{restaurant.name}</h1>
-            <p style={{ color: "rgba(255,255,255,0.82)", fontSize: 14 }}>{restaurant.area} · {restaurant.cuisine} · {restaurant.priceRange}</p>
+            <p style={{ color: "rgba(255,255,255,0.82)", fontSize: 14 }}>
+              {restaurant.area} {cuisineText ? `· ${cuisineText}` : ""} {restaurant.priceRange ? `· ${restaurant.priceRange}` : ""}
+            </p>
           </div>
         </div>
       </section>
@@ -40,7 +94,7 @@ export default function RestaurantDetailPage({ slug }: { slug: string }) {
 
           <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.sandLight}`, padding: 18 }}>
             <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, marginBottom: 10 }}>Must Order</h2>
-            {restaurant.mustOrder.map((item: string) => (
+            {(restaurant.mustOrder || []).map((item: string) => (
               <p key={item} style={{ fontSize: 14, color: "#59544d", marginBottom: 8 }}>• {item}</p>
             ))}
           </div>

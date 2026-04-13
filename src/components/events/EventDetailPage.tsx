@@ -1,11 +1,34 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { C } from "@/lib/constants";
 import { EVENT_DATA } from "@/lib/data";
+import { fetchEvent, type EventItem } from "@/services/eventsService";
 
 export default function EventDetailPage({ slug }: { slug: string }) {
-  const event = EVENT_DATA[slug as keyof typeof EVENT_DATA];
+  const [event, setEvent] = useState<EventItem | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetchEvent(slug)
+      .then((data) => {
+        if (active) {
+          setEvent(data);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          const fallback = EVENT_DATA[slug as keyof typeof EVENT_DATA];
+          setEvent(fallback || null);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
 
   if (!event) {
     return null;
@@ -32,19 +55,21 @@ export default function EventDetailPage({ slug }: { slug: string }) {
 
         <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.sandLight}`, padding: 18, marginBottom: 18 }}>
           <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, marginBottom: 10 }}>Lineup</h2>
-          {event.lineup.map((item: string) => (
+          {(event.lineup || []).map((item: string) => (
             <p key={item} style={{ fontSize: 14, color: "#59544d", marginBottom: 8 }}>• {item}</p>
           ))}
         </div>
 
         <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.sandLight}`, padding: 18 }}>
           <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, marginBottom: 10 }}>Insider Tips</h2>
-          {event.tips.map((tip: string) => (
+          {(event.tips || []).map((tip: string) => (
             <p key={tip} style={{ fontSize: 14, color: "#59544d", marginBottom: 8 }}>• {tip}</p>
           ))}
-          <a href={event.ticketLink} target="_blank" rel="noreferrer noopener" style={{ marginTop: 14, display: "inline-block", background: C.teal, color: C.white, padding: "10px 16px", borderRadius: 10, fontSize: 13, fontWeight: 700 }}>
-            Get Tickets
-          </a>
+          {event.ticketLink ? (
+            <a href={event.ticketLink} target="_blank" rel="noreferrer noopener" style={{ marginTop: 14, display: "inline-block", background: C.teal, color: C.white, padding: "10px 16px", borderRadius: 10, fontSize: 13, fontWeight: 700 }}>
+              Get Tickets
+            </a>
+          ) : null}
         </div>
       </section>
 

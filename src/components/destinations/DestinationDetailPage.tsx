@@ -30,6 +30,10 @@ const TABS: Array<{ key: TabKey; label: string; Icon: typeof LayoutGrid }> = [
   { key: "do", label: "Things to Do", Icon: Compass },
 ];
 
+function isExternalUrl(value: string) {
+  return /^https?:\/\//i.test(value);
+}
+
 function formatInputDate(date: Date) {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
@@ -89,14 +93,20 @@ function ComingSoon({
       }}
     >
       <p style={{ fontSize: 14, color: "#7B766D", marginBottom: 12, lineHeight: 1.7 }}>{message}</p>
-      <Link href={linkHref} style={{ color: C.teal, fontSize: 14, fontWeight: 700 }}>
-        {linkLabel}
-      </Link>
+      {isExternalUrl(linkHref) ? (
+        <a href={linkHref} target="_blank" rel="noreferrer noopener" style={{ color: C.teal, fontSize: 14, fontWeight: 700 }}>
+          {linkLabel}
+        </a>
+      ) : (
+        <Link href={linkHref} style={{ color: C.teal, fontSize: 14, fontWeight: 700 }}>
+          {linkLabel}
+        </Link>
+      )}
     </div>
   );
 }
 
-function HotelSearchWidget({ destName }: { destName: string }) {
+function HotelSearchWidget({ destinationQuery }: { destinationQuery: string }) {
   const today = useMemo(() => formatInputDate(new Date()), []);
   const tomorrow = useMemo(() => {
     const nextDay = new Date();
@@ -111,16 +121,21 @@ function HotelSearchWidget({ destName }: { destName: string }) {
   const nights = getNightCount(checkin, checkout);
 
   const bookingUrl = useMemo(() => {
+    if (isExternalUrl(destinationQuery)) {
+      return destinationQuery;
+    }
+
+    const affiliateId = process.env.NEXT_PUBLIC_BOOKING_AID || "1";
     const params = new URLSearchParams({
-      ss: destName,
+      ss: destinationQuery,
       checkin,
       checkout,
       group_adults: String(guests),
       no_rooms: "1",
-      aid: "1",
+      aid: affiliateId,
     });
     return `https://www.booking.com/search.html?${params.toString()}`;
-  }, [checkin, checkout, destName, guests]);
+  }, [checkin, checkout, destinationQuery, guests]);
 
   return (
     <aside
@@ -143,7 +158,7 @@ function HotelSearchWidget({ destName }: { destName: string }) {
           marginBottom: 20,
         }}
       >
-        Find Hotels in {destName}
+        Find Hotels in {isExternalUrl(destinationQuery) ? "Your Destination" : destinationQuery}
       </h3>
 
       <div style={{ display: "grid", gap: 14 }}>
@@ -340,23 +355,45 @@ function OverviewTab({ dest }: { dest: DestinationDetail }) {
           <p style={{ fontSize: 14, color: "#67625A", lineHeight: 1.8, marginBottom: 20 }}>
             Discover the best of {dest.name} with our curated guides, recommended stays, dining options, and signature experiences.
           </p>
-          <Link
-            href={dest.packageLink}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              background: C.teal,
-              color: C.white,
-              padding: "12px 22px",
-              borderRadius: 12,
-              fontSize: 14,
-              fontWeight: 700,
-            }}
-          >
-            View Packages
-            <ChevronRight size={16} />
-          </Link>
+          {isExternalUrl(dest.packageLink) ? (
+            <a
+              href={dest.packageLink}
+              target="_blank"
+              rel="noreferrer noopener"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: C.teal,
+                color: C.white,
+                padding: "12px 22px",
+                borderRadius: 12,
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              View Packages
+              <ChevronRight size={16} />
+            </a>
+          ) : (
+            <Link
+              href={dest.packageLink}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: C.teal,
+                color: C.white,
+                padding: "12px 22px",
+                borderRadius: 12,
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              View Packages
+              <ChevronRight size={16} />
+            </Link>
+          )}
         </div>
       </div>
     </section>
@@ -495,8 +532,10 @@ const introStyle: CSSProperties = {
   marginBottom: 30,
 };
 
-export default function DestinationDetailPage({ slug }: { slug: DestinationSlug }) {
-  const destination = DESTINATION_DETAIL[slug];
+export default function DestinationDetailPage({ slug }: { slug: string }) {
+  const fallbackSlug = (Object.keys(DESTINATION_DETAIL)[0] as DestinationSlug);
+  const typedSlug = (slug in DESTINATION_DETAIL ? slug : fallbackSlug) as DestinationSlug;
+  const destination = DESTINATION_DETAIL[typedSlug];
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const tabBarRef = useRef<HTMLDivElement | null>(null);
   const [tabBarStuck, setTabBarStuck] = useState(false);
@@ -514,7 +553,7 @@ export default function DestinationDetailPage({ slug }: { slug: DestinationSlug 
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  const relatedDestinations = DESTINATIONS.filter((item) => item.slug !== slug).slice(0, 4);
+  const relatedDestinations = DESTINATIONS.filter((item) => item.slug !== typedSlug).slice(0, 4);
 
   return (
     <main style={{ fontFamily: "var(--font-inter), system-ui, sans-serif", overflowX: "hidden", background: "#FCFAF6", color: C.green }}>
@@ -624,12 +663,12 @@ export default function DestinationDetailPage({ slug }: { slug: DestinationSlug 
             {activeTab === "do" ? <ThingsToDoTab dest={destination} /> : null}
 
             <div className="hotel-mobile" style={{ display: "none", marginTop: 40 }}>
-              <HotelSearchWidget destName={destination.hotelSearch || destination.name} />
+              <HotelSearchWidget destinationQuery={destination.hotelSearch || destination.name} />
             </div>
           </div>
 
           <div className="hotel-sidebar">
-            <HotelSearchWidget destName={destination.hotelSearch || destination.name} />
+            <HotelSearchWidget destinationQuery={destination.hotelSearch || destination.name} />
           </div>
         </div>
       </section>

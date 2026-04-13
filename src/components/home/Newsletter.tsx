@@ -4,22 +4,57 @@ import { ChangeEvent, MouseEvent, useState } from "react";
 import { Mail } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { C } from "@/lib/constants";
+import { subscribe } from "@/lib/api";
 
-export default function Newsletter() {
+type NewsletterCms = {
+  newsletter_eyebrow?: string;
+  newsletter_title?: string;
+  newsletter_subtitle?: string;
+  newsletter_description?: string;
+  newsletter_disclaimer?: string;
+  newsletter_button_label?: string;
+  newsletter_success_message?: string;
+};
+
+export default function Newsletter({ cms }: { cms?: NewsletterCms }) {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async () => {
+    const normalized = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(normalized)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setError("");
+    setIsSubmitting(true);
+    try {
+      await subscribe(normalized);
+      setSubmitted(true);
+      setEmail("");
+    } catch {
+      setError("Could not subscribe right now. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section style={{ background: C.sand, padding: "80px 32px", textAlign: "center" }}>
       <AnimatedSection>
-        <p style={{ color: C.teal, fontSize: 11, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 16 }}>Stay in the Loop</p>
-        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(34px, 5vw, 56px)", color: C.green, marginBottom: 12, lineHeight: 1.1 }}>Get Rooted</h2>
-        <p style={{ fontSize: 17, color: C.green, marginBottom: 8 }}>Subscribe for exclusive travel insights & insider deals</p>
-        <p style={{ fontSize: 14, color: "rgba(15,61,51,0.6)", marginBottom: 40 }}>Weekly Kenya travel ideas, hidden restaurant gems, event discoveries, and special subscriber offers</p>
+        <p style={{ color: C.teal, fontSize: 11, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 16 }}>{cms?.newsletter_eyebrow || "Stay in the Loop"}</p>
+        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(34px, 5vw, 56px)", color: C.green, marginBottom: 12, lineHeight: 1.1 }}>{cms?.newsletter_title || "Get Rooted"}</h2>
+        <p style={{ fontSize: 17, color: C.green, marginBottom: 8 }}>{cms?.newsletter_subtitle || "Subscribe for exclusive travel insights & insider deals"}</p>
+        <p style={{ fontSize: 14, color: "rgba(15,61,51,0.6)", marginBottom: 40 }}>{cms?.newsletter_description || "Weekly Kenya travel ideas, hidden restaurant gems, event discoveries, and special subscriber offers"}</p>
 
         {submitted ? (
           <div style={{ background: C.green, color: C.white, padding: "18px 40px", borderRadius: 16, display: "inline-block", animation: "popIn 0.45s ease" }}>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22 }}>You&apos;re in! Welcome to Rooted Kenya ✦</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22 }}>{cms?.newsletter_success_message || "You're in! Welcome to Rooted Kenya ✦"}</p>
           </div>
         ) : (
           <div style={{ display: "flex", maxWidth: 520, margin: "0 auto", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
@@ -40,7 +75,11 @@ export default function Newsletter() {
               />
             </div>
             <button
-              onClick={() => email && setSubmitted(true)}
+              onClick={() => {
+                if (!isSubmitting) {
+                  void handleSubmit();
+                }
+              }}
               style={{ background: C.green, color: C.white, padding: "15px 32px", borderRadius: 50, fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.3s", whiteSpace: "nowrap" }}
               onMouseEnter={(event: MouseEvent<HTMLButtonElement>) => {
                 event.currentTarget.style.background = C.teal;
@@ -51,11 +90,14 @@ export default function Newsletter() {
                 event.currentTarget.style.transform = "translateY(0)";
               }}
             >
-              Subscribe
+              {isSubmitting ? "Saving..." : cms?.newsletter_button_label || "Subscribe"}
             </button>
           </div>
         )}
-        <p style={{ marginTop: 16, fontSize: 12, color: "rgba(15,61,51,0.5)" }}>No spam. Just the good stuff.</p>
+        {error ? (
+          <p style={{ marginTop: 10, fontSize: 13, color: "#B84840" }}>{error}</p>
+        ) : null}
+        <p style={{ marginTop: 16, fontSize: 12, color: "rgba(15,61,51,0.5)" }}>{cms?.newsletter_disclaimer || "No spam. Just the good stuff."}</p>
       </AnimatedSection>
       <style>{`@keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
     </section>

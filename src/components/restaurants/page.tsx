@@ -1,11 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ChevronRight, DollarSign, LucideIcon, MapPin, UtensilsCrossed } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import PageHero from "@/components/ui/PageHero";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { BUDGETS, C, CUISINES, LOCATIONS } from "@/lib/constants";
+import {
+  fetchRestaurantFilters,
+  fetchRestaurants,
+  type RestaurantFilters,
+  type RestaurantItem,
+} from "@/services/restaurantsService";
 
 interface FilterPillProps {
   label: string;
@@ -19,6 +26,22 @@ interface CategoryCardProps {
   ctaLabel: string;
   ctaHref: string;
   delay: number;
+}
+
+type TrendingRestaurant = {
+  name: string;
+  sub: string;
+  img: string;
+};
+
+function normalizeTrendingRestaurant(item: RestaurantItem): TrendingRestaurant {
+  const cuisines = (item.cuisine || []).map((entry) => entry.name).filter(Boolean);
+
+  return {
+    name: item.name,
+    sub: cuisines.length > 0 ? cuisines.join(" • ") : item.short || item.area || "Curated dining pick",
+    img: item.img || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=700&q=80",
+  };
 }
 
 function FilterPill({ label }: FilterPillProps) {
@@ -136,7 +159,12 @@ function CategoryCard({
 }
 
 export default function RestaurantsPageContent() {
-  const trendingRestaurants = [
+  const [filters, setFilters] = useState<RestaurantFilters>({
+    locations: LOCATIONS,
+    budgets: BUDGETS,
+    cuisines: CUISINES,
+  });
+  const [trendingRestaurants, setTrendingRestaurants] = useState<TrendingRestaurant[]>([
     {
       name: "Nairobi Brunch & Date Night",
       sub: "Most saved brunch and date-night spots",
@@ -152,7 +180,40 @@ export default function RestaurantsPageContent() {
       sub: "Seafood and ocean views on the coast",
       img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=700&q=80",
     },
-  ];
+  ]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        const [fetchedFilters, restaurants] = await Promise.all([
+          fetchRestaurantFilters(),
+          fetchRestaurants({ ordering: "-rating" }),
+        ]);
+
+        if (!mounted) return;
+
+        setFilters({
+          locations: fetchedFilters.locations.length > 0 ? fetchedFilters.locations : LOCATIONS,
+          budgets: fetchedFilters.budgets.length > 0 ? fetchedFilters.budgets : BUDGETS,
+          cuisines: fetchedFilters.cuisines.length > 0 ? fetchedFilters.cuisines : CUISINES,
+        });
+
+        if (restaurants.length > 0) {
+          setTrendingRestaurants(restaurants.slice(0, 3).map(normalizeTrendingRestaurant));
+        }
+      } catch {
+        // Keep static fallback when API is unavailable.
+      }
+    };
+
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <main style={{ fontFamily: "'Inter',system-ui,sans-serif", overflowX: "hidden", background: "#fcfaf6", color: C.green }}>
@@ -177,7 +238,7 @@ export default function RestaurantsPageContent() {
             icon={MapPin}
             title="By Location"
             sub="Nairobi, Diani, Naivasha and beyond — clearly sorted by area"
-            items={LOCATIONS}
+            items={filters.locations}
             ctaLabel="Explore By Location"
             ctaHref="/restaurants/location"
             delay={0}
@@ -186,7 +247,7 @@ export default function RestaurantsPageContent() {
             icon={DollarSign}
             title="By Budget"
             sub="From budget eats to luxury dining"
-            items={BUDGETS}
+            items={filters.budgets}
             ctaLabel="Explore By Budget"
             ctaHref="/restaurants/budget"
             delay={0.1}
@@ -195,7 +256,7 @@ export default function RestaurantsPageContent() {
             icon={UtensilsCrossed}
             title="By Cuisine"
             sub="Italian, seafood, nyama choma, Asian, and more"
-            items={CUISINES}
+            items={filters.cuisines}
             ctaLabel="Explore By Cuisine"
             ctaHref="/restaurants/cuisine"
             delay={0.2}
@@ -227,11 +288,7 @@ export default function RestaurantsPageContent() {
             {trendingRestaurants.map((restaurant, index) => (
               <AnimatedSection key={restaurant.name} delay={index * 0.1}>
                 <div className="hover-zoom-frame" style={{ borderRadius: 16, overflow: "hidden", position: "relative", height: 240, cursor: "pointer" }}>
-                  <img
-                    src={restaurant.img}
-                    alt={restaurant.name}
-                    className="hover-zoom-img"
-                  />
+                  <img src={restaurant.img} alt={restaurant.name} className="hover-zoom-img" />
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(15,61,51,0.9) 0%,transparent 60%)" }} />
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 22px" }}>
                     <h4

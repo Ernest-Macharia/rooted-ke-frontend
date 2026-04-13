@@ -34,14 +34,14 @@ export const getBlogPost = (slug: string) =>
   api.get(`/api/blog/${slug}/`);
 
 export const subscribe = (email: string) =>
-  api.post("/api/newsletter/subscribe/", { email });
+  api.post("/api/newsletter/subscribers/subscribe/", { email });
 
 export const submitEnquiry = <TData>(data: TData) =>
   api.post("/api/bookings/enquire/", data);
 
 export const getHomepageData = () => api.get("/api/core/homepage/");
-export const getSitePage = (slug: string) =>
-  api.get(`/api/core/site-pages/${slug}/`);
+export const getAppPage = (slug: string) =>
+  api.get(`/api/core/pages/${slug}/`);
 export const getLegalPages = () => api.get("/api/core/legal-pages/");
 export const getFrontendBootstrap = () => api.get("/api/core/frontend-bootstrap/");
 
