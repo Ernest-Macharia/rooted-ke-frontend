@@ -1,5 +1,6 @@
 import BlogPostPage from "@/components/blog/BlogPostPage";
 
-export default function BlogPostRoute({ params }: { params: { slug: string } }) {
-  return <BlogPostPage slug={params.slug} />;
+export default async function BlogPostRoute({ params }: { params: Promise<{ slug: string }> | { slug: string } }) {
+  const resolvedParams = await params;
+  return <BlogPostPage slug={resolvedParams.slug} />;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, Lightbulb } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
@@ -8,12 +8,38 @@ import Footer from "@/components/layout/Footer";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { C, BLOG_POSTS } from "@/lib/constants";
 import { BLOG_DATA } from "@/lib/data";
-import { fetchBlogPost, fetchBlogPosts, type BlogPostItem } from "@/services/blogService";
+import { fetchBlogPost, fetchBlogPosts, submitBlogComment, type BlogPostItem } from "@/services/blogService";
 
 type BodyBlockItem = {
   type: string;
   text: string;
 };
+
+function normalizeDetailPost(input: BlogPostItem | null): BlogPostItem | null {
+  if (!input) {
+    return null;
+  }
+
+  const normalized = { ...input } as BlogPostItem & {
+    tags?: unknown;
+    author?: unknown;
+  };
+
+  if (!normalized.authorObj && normalized.author && typeof normalized.author === "object") {
+    const author = normalized.author as { name?: string; avatar?: string };
+    normalized.authorObj = {
+      name: author.name || "Rooted Kenya",
+      avatar: author.avatar,
+    };
+    normalized.author = author.name || "Rooted Kenya";
+  }
+
+  if (!normalized.tags_list && Array.isArray(normalized.tags)) {
+    normalized.tags_list = normalized.tags.filter((item): item is string => typeof item === "string");
+  }
+
+  return normalized;
+}
 
 function BodyBlock({ block }: { block: BodyBlockItem }) {
   switch (block.type) {
@@ -49,6 +75,10 @@ function BodyBlock({ block }: { block: BodyBlockItem }) {
 export default function BlogPostPage({ slug }: { slug: string }) {
   const [post, setPost] = useState<BlogPostItem | null>(null);
   const [allPosts, setAllPosts] = useState<BlogPostItem[]>([]);
+  const [commentName, setCommentName] = useState("");
+  const [commentEmail, setCommentEmail] = useState("");
+  const [commentText, setCommentText] = useState("");
+  const [commentState, setCommentState] = useState<"idle" | "sending" | "success" | "error">("idle");
 
   useEffect(() => {
     let active = true;
@@ -57,15 +87,19 @@ export default function BlogPostPage({ slug }: { slug: string }) {
         if (!active) {
           return;
         }
-        setPost(detail);
-        setAllPosts(posts);
+
+        const fallbackPost = BLOG_DATA[slug as keyof typeof BLOG_DATA] as unknown as BlogPostItem | undefined;
+        const listMatch = posts.find((item) => item.slug === slug) || null;
+        const candidate = detail || listMatch || fallbackPost || null;
+        setPost(normalizeDetailPost(candidate));
+        setAllPosts(posts.length ? posts : (BLOG_POSTS as unknown as BlogPostItem[]));
       })
       .catch(() => {
         if (!active) {
           return;
         }
         const fallbackPost = BLOG_DATA[slug as keyof typeof BLOG_DATA] as unknown as BlogPostItem;
-        setPost(fallbackPost || null);
+        setPost(normalizeDetailPost(fallbackPost || null));
         setAllPosts(BLOG_POSTS as unknown as BlogPostItem[]);
       });
     return () => {
@@ -94,6 +128,31 @@ export default function BlogPostPage({ slug }: { slug: string }) {
   const postAvatar = post.authorObj?.avatar;
   const postTags = post.tags_list || [];
   const postBody = post.body || [];
+  const postImage = post.img || "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1400&q=80";
+  const approvedComments = post.approved_comments || [];
+
+  const handleCommentSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!commentName.trim() || !commentEmail.trim() || !commentText.trim()) {
+      setCommentState("error");
+      return;
+    }
+
+    try {
+      setCommentState("sending");
+      await submitBlogComment(slug, {
+        author: commentName.trim(),
+        email: commentEmail.trim(),
+        content: commentText.trim(),
+      });
+      setCommentName("");
+      setCommentEmail("");
+      setCommentText("");
+      setCommentState("success");
+    } catch {
+      setCommentState("error");
+    }
+  };
 
   return (
     <main style={{ fontFamily: "'Inter',system-ui,sans-serif", overflowX: "hidden" }}>
@@ -107,7 +166,7 @@ export default function BlogPostPage({ slug }: { slug: string }) {
       <Navbar />
 
       <section style={{ position: "relative", height: "60vh", minHeight: 400, marginTop: 72, overflow: "hidden" }}>
-        <img src={post.img} alt={post.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 40%" }} />
+        <img src={postImage} alt={post.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 40%" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(10,35,28,0.1) 0%, rgba(10,35,28,0.78) 100%)" }} />
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "40px 48px" }}>
           <Link href="/blog" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: C.sand, fontSize: 12, marginBottom: 16, opacity: 0.85 }}>
@@ -184,6 +243,71 @@ export default function BlogPostPage({ slug }: { slug: string }) {
           </div>
         </section>
       ) : null}
+
+      <section style={{ maxWidth: 800, margin: "0 auto", padding: "0 32px 80px" }}>
+        <h3 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 30, color: C.green, marginBottom: 12 }}>
+          Comments ({post.comments_count || approvedComments.length})
+        </h3>
+
+        {approvedComments.length ? (
+          <div style={{ display: "grid", gap: 12, marginBottom: 30 }}>
+            {approvedComments.map((comment) => (
+              <article key={`${comment.id || comment.author}-${comment.created_at || comment.content.slice(0, 12)}`} style={{ background: C.sandLight, borderRadius: 12, padding: "14px 16px" }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: C.green, marginBottom: 6 }}>{comment.author}</p>
+                <p style={{ fontSize: 14, color: "#555", lineHeight: 1.7 }}>{comment.content}</p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: "#777", fontSize: 14, marginBottom: 22 }}>No comments yet. Be the first to share a thought.</p>
+        )}
+
+        <form onSubmit={handleCommentSubmit} style={{ display: "grid", gap: 12, background: C.white, border: `1px solid ${C.sandLight}`, borderRadius: 14, padding: 18 }}>
+          <h4 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 25, color: C.green }}>Leave a Comment</h4>
+          <input
+            value={commentName}
+            onChange={(event) => setCommentName(event.target.value)}
+            placeholder="Your name"
+            style={{ border: `1px solid ${C.sandDark}`, borderRadius: 10, padding: "10px 12px", fontSize: 14 }}
+          />
+          <input
+            type="email"
+            value={commentEmail}
+            onChange={(event) => setCommentEmail(event.target.value)}
+            placeholder="Your email"
+            style={{ border: `1px solid ${C.sandDark}`, borderRadius: 10, padding: "10px 12px", fontSize: 14 }}
+          />
+          <textarea
+            value={commentText}
+            onChange={(event) => setCommentText(event.target.value)}
+            placeholder="Write your comment..."
+            rows={4}
+            style={{ border: `1px solid ${C.sandDark}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, resize: "vertical" }}
+          />
+          <button
+            type="submit"
+            disabled={commentState === "sending"}
+            style={{
+              background: C.green,
+              color: C.white,
+              border: "none",
+              borderRadius: 10,
+              padding: "11px 16px",
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: commentState === "sending" ? "not-allowed" : "pointer",
+            }}
+          >
+            {commentState === "sending" ? "Submitting..." : "Submit Comment"}
+          </button>
+          {commentState === "success" ? (
+            <p style={{ fontSize: 13, color: C.teal }}>Thanks. Your comment was submitted for moderation.</p>
+          ) : null}
+          {commentState === "error" ? (
+            <p style={{ fontSize: 13, color: "#b2443c" }}>Please fill all fields and try again.</p>
+          ) : null}
+        </form>
+      </section>
 
       <Footer />
     </main>

@@ -12,10 +12,19 @@ export type BlogPostItem = {
   category?: string;
   category_detail?: { name: string };
   tags_list?: string[];
+  tags?: string[] | string;
   body?: Array<{ type: string; text: string }>;
   relatedSlugs?: string[];
   authorObj?: { name: string; avatar?: string };
   author?: string;
+  approved_comments?: Array<{ id?: number; author: string; content: string; created_at?: string }>;
+  comments_count?: number;
+};
+
+export type BlogCommentInput = {
+  author: string;
+  email: string;
+  content: string;
 };
 
 export async function fetchBlogPosts(params: Record<string, unknown> = {}): Promise<BlogPostItem[]> {
@@ -31,4 +40,9 @@ export async function fetchBlogPost(slug: string): Promise<BlogPostItem | null> 
 export async function fetchBlogCategoryLabels(): Promise<string[]> {
   const response = await api.get("/api/blog/category-labels/");
   return Array.isArray(response.data) ? (response.data as string[]) : ["All"];
+}
+
+export async function submitBlogComment(slug: string, payload: BlogCommentInput): Promise<boolean> {
+  await api.post(`/api/blog/${slug}/add_comment/`, payload);
+  return true;
 }

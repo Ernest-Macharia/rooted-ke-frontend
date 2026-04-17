@@ -18,6 +18,7 @@ export type RestaurantItem = {
   mustOrder?: string[];
   bookingRequired?: boolean;
   phone?: string;
+  website?: string;
   location?: string;
   tags?: string[];
   gallery?: string[];

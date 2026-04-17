@@ -41,6 +41,7 @@ export default function RestaurantDetailPage({ slug }: { slug: string }) {
             mustOrder: fallback.mustOrder || [],
             bookingRequired: fallback.bookingRequired,
             phone: fallback.phone,
+            website: "website" in fallback && typeof fallback.website === "string" ? fallback.website : undefined,
             location: fallback.location,
             tags: fallback.tags || [],
             gallery: fallback.gallery || [],
@@ -62,6 +63,7 @@ export default function RestaurantDetailPage({ slug }: { slug: string }) {
     Array.isArray(restaurant.cuisine) && restaurant.cuisine.length > 0
       ? restaurant.cuisine.map((item) => item.name).join(", ")
       : "";
+  const websiteUrl = restaurant.website?.trim();
 
   return (
     <main style={{ fontFamily: "'Inter',system-ui,sans-serif", background: "#fcfaf6", color: C.green }}>
@@ -90,6 +92,25 @@ export default function RestaurantDetailPage({ slug }: { slug: string }) {
             <p style={{ fontSize: 14, color: "#59544d", marginBottom: 6 }}>Opening hours: {restaurant.openingHours}</p>
             <p style={{ fontSize: 14, color: "#59544d", marginBottom: 6 }}>Phone: {restaurant.phone}</p>
             <p style={{ fontSize: 14, color: "#59544d" }}>Location: {restaurant.location}</p>
+            {websiteUrl ? (
+              <a
+                href={websiteUrl}
+                target="_blank"
+                rel="nofollow sponsored noreferrer noopener"
+                style={{
+                  display: "inline-flex",
+                  marginTop: 14,
+                  background: C.teal,
+                  color: C.white,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  padding: "10px 16px",
+                  borderRadius: 10,
+                }}
+              >
+                Book Table
+              </a>
+            ) : null}
           </div>
 
           <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.sandLight}`, padding: 18 }}>
